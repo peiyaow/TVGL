@@ -84,6 +84,7 @@ def TVGL(data, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False, sig
 
 def myTVGL(mydata, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False, sigma = 1, width = 5, verbose = False, eps = 3e-3, epsAbs = 1e-3, epsRel = 1e-3):        
 # mydata: array of len_class by nt by p    
+# sigma is h
     if indexOfPenalty == 1:
         print 'Use l-1 penalty function'
         from inferGraphL1 import *
