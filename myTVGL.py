@@ -155,13 +155,13 @@ def myTVGL(mydata, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False,
                 gvx.AddEdge(n_id, prev_Nid, Objective = edge_obj)
             
             #Add rake nodes, edges
-            gvx.AddNode(n_id + timestamps)
-            gvx.AddEdge(n_id, n_id + timestamps, Objective= lamb * norm(S,1))
+            gvx.AddNode(n_id + len_class)
+            gvx.AddEdge(n_id, n_id + len_class, Objective= lamb * norm(S,1))
                 
         # need to write the parameters of ADMM
 #   gvx.Solve()
         gvx.Solve(EpsAbs=epsAbs, EpsRel=epsRel, Verbose = verbose)
-   # gvx.Solve(MaxIters = 700, Verbose = True, EpsAbs=eps_abs, EpsRel=eps_rel)
+    # gvx.Solve(MaxIters = 700, Verbose = True, EpsAbs=eps_abs, EpsRel=eps_rel)
     # gvx.Solve( NumProcessors = 1, MaxIters = 3)
     
     # Extract the set of estimated theta 
@@ -237,13 +237,13 @@ def myTVGL0(mydata, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False
         
     print 'lambda = %s, beta = %s'%(lamb, beta)
     thetaSet_list = []
-    for class_ix in range(len_class):
+    for time_ix in range(timestamps):
         # Define a graph representation to solve
         gvx = TGraphVX()   
-        for i in range(len_t):
+        for i in range(len_class):
             n_id = i
             S = semidefinite(size, name='S')
-            obj = -log_det(S) + trace(empCovSet_array[i][class_ix] * S) #+ alpha*norm(S,1)
+            obj = -log_det(S) + trace(empCovSet_list[i][time_ix] * S) #+ alpha*norm(S,1)
             gvx.AddNode(n_id, obj)
             
             if (i > 0): #Add edge to previous timestamp
@@ -265,12 +265,49 @@ def myTVGL0(mydata, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False
     
     # Extract the set of estimated theta 
         thetaSet = []
-        for nodeID in range(len_t):
+        for nodeID in range(len_class):
             val = gvx.GetNodeValue(nodeID,'S')
             thetaEst = upper2FullTVGL(val, eps)
             thetaSet.append(thetaEst)
         thetaSet_list.append(thetaSet)
-    return thetaSet_list
+    return thetaSet_list    
+        
+#    print 'lambda = %s, beta = %s'%(lamb, beta)
+#    thetaSet_list = []
+#    for class_ix in range(len_class):
+#        # Define a graph representation to solve
+#        gvx = TGraphVX()   
+#        for i in range(len_t):
+#            n_id = i
+#            S = semidefinite(size, name='S')
+#            obj = -log_det(S) + trace(empCovSet_array[i][class_ix] * S) #+ alpha*norm(S,1)
+#            gvx.AddNode(n_id, obj)
+#            
+#            if (i > 0): #Add edge to previous timestamp
+#                prev_Nid = n_id - 1
+#                currVar = gvx.GetNodeVariables(n_id)
+#                prevVar = gvx.GetNodeVariables(prev_Nid)            
+#                edge_obj = beta * norm(currVar['S'] - prevVar['S'], indexOfPenalty) 
+#                gvx.AddEdge(n_id, prev_Nid, Objective = edge_obj)
+#            
+#            #Add rake nodes, edges
+#            gvx.AddNode(n_id + len_class)
+#            gvx.AddEdge(n_id, n_id + len_class, Objective= lamb * norm(S,1))
+#                
+#        # need to write the parameters of ADMM
+##   gvx.Solve()
+#        gvx.Solve(EpsAbs=epsAbs, EpsRel=epsRel, Verbose = verbose)
+#   # gvx.Solve(MaxIters = 700, Verbose = True, EpsAbs=eps_abs, EpsRel=eps_rel)
+#    # gvx.Solve( NumProcessors = 1, MaxIters = 3)
+#    
+#    # Extract the set of estimated theta 
+#        thetaSet = []
+#        for nodeID in range(len_t):
+#            val = gvx.GetNodeValue(nodeID,'S')
+#            thetaEst = upper2FullTVGL(val, eps)
+#            thetaSet.append(thetaEst)
+#        thetaSet_list.append(thetaSet)
+#    return thetaSet_list
 
 def GenEmpCov(samples, useKnownMean = False, m = 0):
     # samples should be array
