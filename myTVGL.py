@@ -4,7 +4,8 @@
 import numpy as np
 import numpy.linalg as alg
 
-def TVGL(data, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False, sigma = 1, width = 5, verbose = False, eps = 3e-3, epsAbs = 1e-3, epsRel = 1e-3):        
+def TVGL(data, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False, sigma = 1, width = 5, verbose = False, eps = 3e-3, epsAbs = 1e-3, epsRel = 1e-3): 
+# Shuheng       
     if indexOfPenalty == 1:
         print 'Use l-1 penalty function'
         from inferGraphL1 import *
@@ -45,7 +46,7 @@ def TVGL(data, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False, sig
             empCovSet.append(empCov)
             
     # delete: for checking
-    print sampleSet.__len__() # 
+#    print sampleSet.__len__() # 
 #    print empCovSet
     print 'lambda = %s, beta = %s'%(lamb, beta)
     
