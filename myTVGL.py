@@ -177,113 +177,76 @@ def myTVGL(mydata, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False,
     
     return thetaSet_list
 
-def myTVGL0(mydata, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False, sigma = 1, width = 5, verbose = False, eps = 3e-3, epsAbs = 1e-3, epsRel = 1e-3):           
-# mydata ndarray t by n*len_class by p
-    if indexOfPenalty == 1:
-        print 'Use l-1 penalty function'
-        from inferGraphL1 import *
-    elif indexOfPenalty == 2:
-        print 'Use l-2 penalty function'
-        from inferGraphL2 import *
-    elif indexOfPenalty == 3:
-        print 'Use laplacian penalty function'
-        from inferGraphLaplacian import *
-    elif indexOfPenalty == 4:
-        print 'Use l-inf penalty function'
-        from inferGraphLinf import *
-    else:
-        print 'Use perturbation node penalty function'
-        from inferGraphPN import *
-
-    # len_t = len(mydata) # len_class to len_t
-    len_t = mydata.shape[0]
-    numberOfTotalSamples = mydata.shape[1] #  numberOfTotalSamples = n times len_class
-    len_class = int(numberOfTotalSamples/lengthOfSlice) 
-    # lengthOfSlice is the number of samples in each class
-    # timestamps to len_class
-    size = mydata.shape[2] # size = p
-
-    mydata_array = np.array(mydata) # t by n*len_class by p
-    mydata_array = np.reshape(mydata_array, (len_t, len_class, lengthOfSlice, size))
-    mydata1_array = np.transpose(mydata_array, [1, 0, 2, 3]) # class by t by ni by p
-    mydata1_array = np.reshape(mydata1_array, (len_class, lengthOfSlice*len_t, size))
-
-    empCovSet_list = []
-    for class_ix in range(len_class):
-        data = mydata1_array[class_ix]
-        numberOfTotalSamples = data.shape[0]
-        timestamps = int(numberOfTotalSamples/lengthOfSlice)    
-        size = data.shape[1]
-    # Generate empirical covariance matrices
-        sampleSet = []    # list of array
-        k = 0
-        for i in range(timestamps):
-            # Generate the slice of samples for each timestamp from data
-            k_next = min(k + lengthOfSlice, numberOfTotalSamples)
-            samples = data[k : k_next, :]
-            k = k_next
-            sampleSet.append(samples)
-    
-        empCovSet = []    # list of array
-        if useKernel != True:
-            for i in range(timestamps):
-                empCov = GenEmpCov(sampleSet[i].T)
-                empCovSet.append(empCov)
-        else:
-            for i in range(timestamps):
-                empCov = genEmpCov_kernel(i, sigma, width, sampleSet)
-                empCovSet.append(empCov)
-        empCovSet_list.append(empCovSet)   
-        
-        empCovSet_array = np.array(empCovSet_list) # len_class by timestamps by size by size
-        empCovSet_array = np.transpose(empCovSet_array, [1, 0, 2, 3]) # t by class by size by size
-        
-    print 'lambda = %s, beta = %s'%(lamb, beta)
-    thetaSet_list = []
-    for time_ix in range(timestamps):
-        # Define a graph representation to solve
-        gvx = TGraphVX()   
-        for i in range(len_class):
-            n_id = i
-            S = semidefinite(size, name='S')
-            obj = -log_det(S) + trace(empCovSet_list[i][time_ix] * S) #+ alpha*norm(S,1)
-            gvx.AddNode(n_id, obj)
-            
-            if (i > 0): #Add edge to previous timestamp
-                prev_Nid = n_id - 1
-                currVar = gvx.GetNodeVariables(n_id)
-                prevVar = gvx.GetNodeVariables(prev_Nid)            
-                edge_obj = beta * norm(currVar['S'] - prevVar['S'], indexOfPenalty) 
-                gvx.AddEdge(n_id, prev_Nid, Objective = edge_obj)
-            
-            #Add rake nodes, edges
-            gvx.AddNode(n_id + len_class)
-            gvx.AddEdge(n_id, n_id + len_class, Objective= lamb * norm(S,1))
-                
-        # need to write the parameters of ADMM
-#   gvx.Solve()
-        gvx.Solve(EpsAbs=epsAbs, EpsRel=epsRel, Verbose = verbose)
-   # gvx.Solve(MaxIters = 700, Verbose = True, EpsAbs=eps_abs, EpsRel=eps_rel)
-    # gvx.Solve( NumProcessors = 1, MaxIters = 3)
-    
-    # Extract the set of estimated theta 
-        thetaSet = []
-        for nodeID in range(len_class):
-            val = gvx.GetNodeValue(nodeID,'S')
-            thetaEst = upper2FullTVGL(val, eps)
-            thetaSet.append(thetaEst)
-        thetaSet_list.append(thetaSet)
-    return thetaSet_list    
-        
+#def myTVGL0(mydata, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False, sigma = 1, width = 5, verbose = False, eps = 3e-3, epsAbs = 1e-3, epsRel = 1e-3):           
+## mydata ndarray t by n*len_class by p
+#    if indexOfPenalty == 1:
+#        print 'Use l-1 penalty function'
+#        from inferGraphL1 import *
+#    elif indexOfPenalty == 2:
+#        print 'Use l-2 penalty function'
+#        from inferGraphL2 import *
+#    elif indexOfPenalty == 3:
+#        print 'Use laplacian penalty function'
+#        from inferGraphLaplacian import *
+#    elif indexOfPenalty == 4:
+#        print 'Use l-inf penalty function'
+#        from inferGraphLinf import *
+#    else:
+#        print 'Use perturbation node penalty function'
+#        from inferGraphPN import *
+#
+#    # len_t = len(mydata) # len_class to len_t
+#    len_t = mydata.shape[0]
+#    numberOfTotalSamples = mydata.shape[1] #  numberOfTotalSamples = n times len_class
+#    len_class = int(numberOfTotalSamples/lengthOfSlice) 
+#    # lengthOfSlice is the number of samples in each class
+#    # timestamps to len_class
+#    size = mydata.shape[2] # size = p
+#
+#    mydata_array = np.array(mydata) # t by n*len_class by p
+#    mydata_array = np.reshape(mydata_array, (len_t, len_class, lengthOfSlice, size))
+#    mydata1_array = np.transpose(mydata_array, [1, 0, 2, 3]) # class by t by ni by p
+#    mydata1_array = np.reshape(mydata1_array, (len_class, lengthOfSlice*len_t, size))
+#
+#    empCovSet_list = []
+#    for class_ix in range(len_class):
+#        data = mydata1_array[class_ix]
+#        numberOfTotalSamples = data.shape[0]
+#        timestamps = int(numberOfTotalSamples/lengthOfSlice)    
+#        size = data.shape[1]
+#    # Generate empirical covariance matrices
+#        sampleSet = []    # list of array
+#        k = 0
+#        for i in range(timestamps):
+#            # Generate the slice of samples for each timestamp from data
+#            k_next = min(k + lengthOfSlice, numberOfTotalSamples)
+#            samples = data[k : k_next, :]
+#            k = k_next
+#            sampleSet.append(samples)
+#    
+#        empCovSet = []    # list of array
+#        if useKernel != True:
+#            for i in range(timestamps):
+#                empCov = GenEmpCov(sampleSet[i].T)
+#                empCovSet.append(empCov)
+#        else:
+#            for i in range(timestamps):
+#                empCov = genEmpCov_kernel(i, sigma, width, sampleSet)
+#                empCovSet.append(empCov)
+#        empCovSet_list.append(empCovSet)   
+#        
+#        empCovSet_array = np.array(empCovSet_list) # len_class by timestamps by size by size
+#        empCovSet_array = np.transpose(empCovSet_array, [1, 0, 2, 3]) # t by class by size by size
+#        
 #    print 'lambda = %s, beta = %s'%(lamb, beta)
 #    thetaSet_list = []
-#    for class_ix in range(len_class):
+#    for time_ix in range(timestamps):
 #        # Define a graph representation to solve
 #        gvx = TGraphVX()   
-#        for i in range(len_t):
+#        for i in range(len_class):
 #            n_id = i
 #            S = semidefinite(size, name='S')
-#            obj = -log_det(S) + trace(empCovSet_array[i][class_ix] * S) #+ alpha*norm(S,1)
+#            obj = -log_det(S) + trace(empCovSet_list[i][time_ix] * S) #+ alpha*norm(S,1)
 #            gvx.AddNode(n_id, obj)
 #            
 #            if (i > 0): #Add edge to previous timestamp
@@ -305,12 +268,49 @@ def myTVGL0(mydata, lengthOfSlice, lamb, beta, indexOfPenalty, useKernel = False
 #    
 #    # Extract the set of estimated theta 
 #        thetaSet = []
-#        for nodeID in range(len_t):
+#        for nodeID in range(len_class):
 #            val = gvx.GetNodeValue(nodeID,'S')
 #            thetaEst = upper2FullTVGL(val, eps)
 #            thetaSet.append(thetaEst)
 #        thetaSet_list.append(thetaSet)
-#    return thetaSet_list
+#    return thetaSet_list    
+#        
+##    print 'lambda = %s, beta = %s'%(lamb, beta)
+##    thetaSet_list = []
+##    for class_ix in range(len_class):
+##        # Define a graph representation to solve
+##        gvx = TGraphVX()   
+##        for i in range(len_t):
+##            n_id = i
+##            S = semidefinite(size, name='S')
+##            obj = -log_det(S) + trace(empCovSet_array[i][class_ix] * S) #+ alpha*norm(S,1)
+##            gvx.AddNode(n_id, obj)
+##            
+##            if (i > 0): #Add edge to previous timestamp
+##                prev_Nid = n_id - 1
+##                currVar = gvx.GetNodeVariables(n_id)
+##                prevVar = gvx.GetNodeVariables(prev_Nid)            
+##                edge_obj = beta * norm(currVar['S'] - prevVar['S'], indexOfPenalty) 
+##                gvx.AddEdge(n_id, prev_Nid, Objective = edge_obj)
+##            
+##            #Add rake nodes, edges
+##            gvx.AddNode(n_id + len_class)
+##            gvx.AddEdge(n_id, n_id + len_class, Objective= lamb * norm(S,1))
+##                
+##        # need to write the parameters of ADMM
+###   gvx.Solve()
+##        gvx.Solve(EpsAbs=epsAbs, EpsRel=epsRel, Verbose = verbose)
+##   # gvx.Solve(MaxIters = 700, Verbose = True, EpsAbs=eps_abs, EpsRel=eps_rel)
+##    # gvx.Solve( NumProcessors = 1, MaxIters = 3)
+##    
+##    # Extract the set of estimated theta 
+##        thetaSet = []
+##        for nodeID in range(len_t):
+##            val = gvx.GetNodeValue(nodeID,'S')
+##            thetaEst = upper2FullTVGL(val, eps)
+##            thetaSet.append(thetaEst)
+##        thetaSet_list.append(thetaSet)
+##    return thetaSet_list
 
 def GenEmpCov(samples, useKnownMean = False, m = 0):
     # samples should be array
