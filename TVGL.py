@@ -29,7 +29,7 @@ def TVGL(data, lengthOfSlice, lamb, beta, indexOfPenalty, verbose = False, eps =
 
     for i in range(timestamps):
         # Generate the slice of samples for each timestamp from data
-        k_next = min(k + lengthOfSlice, numberOfTotalSamples)
+        k_next = np.min((k + lengthOfSlice, numberOfTotalSamples))
         samples = data[k : k_next, :]
         k = k_next
         sampleSet.append(samples)        
