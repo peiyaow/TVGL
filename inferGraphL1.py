@@ -155,6 +155,7 @@ class TGraphVX(TUNGraph):
             nid = ni.GetId()
             objective += self.node_objectives[nid]
             constraints += self.node_constraints[nid]
+
         # Add all edge objectives and constraints
         for ei in self.Edges():
             etup = self.__GetEdgeTup(ei.GetSrcNId(), ei.GetDstNId())
@@ -173,6 +174,7 @@ class TGraphVX(TUNGraph):
         self.status = problem.status
         self.value = problem.value
         # Insert into hash to support ADMM structures and GetNodeValue()
+
         for ni in self.Nodes():
             nid = ni.GetId()
             variables = self.node_variables[nid]
@@ -187,6 +189,7 @@ class TGraphVX(TUNGraph):
                 else:
                     value = numpy.concatenate((value, val))
             self.node_values[nid] = value
+
 
     """Function to solve cluster wise optimization problem"""
     def __SolveClusterADMM(self,M,UseADMM,superNodes,numProcessors, rho_param, 
@@ -300,7 +303,7 @@ class TGraphVX(TUNGraph):
                     verbose):
         global node_vals, edge_z_vals, edge_u_vals, rho
         global getValue, rho_update_func
-
+        
         if numProcessors <= 0:
             num_processors = multiprocessing.cpu_count()
         else:
@@ -1189,7 +1192,8 @@ def ADMM_x(entry):
 #
 #    # Write back result of x-update
 #    writeObjective(node_vals, entry[X_IND], objective, variables)
-    return None
+#    return None
+    return
 
 # z-update for ADMM for one edge
 def ADMM_z(entry, index_penalty = 1):
@@ -1294,8 +1298,8 @@ def ADMM_z(entry, index_penalty = 1):
         writeObjective(edge_z_vals, entry[Z_ZJIIND], objective, variables_j)
         
     #----------------------- Use CVXPY  -----------------------------
-
-    return None
+    return
+#    return None
 
 # u-update for ADMM for one edge
 def ADMM_u(entry):
