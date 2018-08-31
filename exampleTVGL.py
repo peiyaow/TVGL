@@ -10,11 +10,15 @@ data = np.random.multivariate_normal(np.zeros(2), Cov, 50)
 
 
 data = np.genfromtxt('PaperCode/Datasets/finance.csv', delimiter=',')
-data = data[0:30,0:10]
+data = data[0:30,:10]
 lamb = 2.5
-beta = 12
+beta = 3
 lengthOfSlice = 10
+<<<<<<< HEAD
 thetaSet = tvgl.TVGL(data, lengthOfSlice, lamb, beta, indexOfPenalty = 1, verbose=True)
+=======
+thetaSet = tvgl.TVGL(data, lengthOfSlice, lamb, beta, indexOfPenalty = 2, verbose=True)
+>>>>>>> e61d7d64181e694c2699ffbb27dbe6d866da2a7e
 print thetaSet
 
 

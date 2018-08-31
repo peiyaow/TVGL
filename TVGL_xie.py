@@ -1,7 +1,14 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Aug 30 15:43:13 2018
+
+@author: peiyao
+"""
+
 import numpy as np
 import numpy.linalg as alg
 
-def TVGL(data, lengthOfSlice, lamb, beta, indexOfPenalty, verbose = False, eps = 3e-3, epsAbs = 1e-3, epsRel = 1e-3):        
+def TVGL_xie(empCovSet, lamb, beta, indexOfPenalty, verbose = False, eps = 3e-3, epsAbs = 1e-3, epsRel = 1e-3):        
     if indexOfPenalty == 1:
         print 'Use l-1 penalty function'
         from inferGraphL1 import *
@@ -17,42 +24,21 @@ def TVGL(data, lengthOfSlice, lamb, beta, indexOfPenalty, verbose = False, eps =
     else:
         print 'Use perturbation node penalty function'
         from inferGraphPN import *
-
-    numberOfTotalSamples = data.shape[0]
-    timestamps = int(numberOfTotalSamples/lengthOfSlice)    
-    size = data.shape[1]
-    # Generate empirical covariance matrices
-    sampleSet = []    # list of array
-    k = 0
     
-    empCovSet = []    # list of array
-
-    for i in range(timestamps):
-        # Generate the slice of samples for each timestamp from data
-        k_next = np.min((k + lengthOfSlice, numberOfTotalSamples))
-        samples = data[k : k_next, :]
-        k = k_next
-        sampleSet.append(samples)        
-        
-        empCov = GenEmpCov(sampleSet[i].T)
-        empCovSet.append(empCov)
-    
-    # delete: for checking
-    print sampleSet.__len__() # 
-#    print empCovSet
-    print 'lambda = %s, beta = %s'%(lamb, beta)
-    
+    timestamps = empCovSet.shape[0]
+    size = empCovSet.shape[1]
     # Define a graph representation to solve
     gvx = TGraphVX()   
     for i in range(timestamps):
         n_id = i
         S = semidefinite(size, name='S')
         obj = -log_det(S) + trace(empCovSet[i] * S) #+ alpha*norm(S,1)
-        gvx.AddNode(n_id, obj)        
+        gvx.AddNode(n_id, obj)
+        
         if (i > 0): #Add edge to previous timestamp
             prev_Nid = n_id - 1
             currVar = gvx.GetNodeVariables(n_id)
-            prevVar = gvx.GetNodeVariables(prev_Nid)  
+            prevVar = gvx.GetNodeVariables(prev_Nid)            
             edge_obj = beta * norm(currVar['S'] - prevVar['S'], indexOfPenalty) 
             gvx.AddEdge(n_id, prev_Nid, Objective = edge_obj)
         
@@ -96,4 +82,3 @@ def upper2FullTVGL(a, eps = 0):
     d = A.diagonal()
     A = np.asarray((A + A.T) - np.diag(d))             
     return A   
-
